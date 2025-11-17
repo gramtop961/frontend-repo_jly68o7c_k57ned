@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { api } from '../lib/api'
 import ServiceForm from './ServiceForm'
+import { PH_PROVINCES } from '../lib/locations'
 
 export default function Dashboard({ token, user, onLogout }) {
   const [tab, setTab] = useState('browse')
@@ -49,35 +50,43 @@ export default function Dashboard({ token, user, onLogout }) {
     await refreshBookings()
   }
 
+  const provinceOptions = useMemo(() => PH_PROVINCES, [])
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between bg-white/80 backdrop-blur rounded-xl px-4 py-3 ring-1 ring-slate-200">
         <div>
-          <h1 className="text-2xl font-bold">Service Marketplace</h1>
-          <p className="text-gray-600">Welcome, {me.name}</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Servizo</h1>
+          <p className="text-slate-600">Welcome, {me.name}</p>
         </div>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 bg-white border rounded px-3 py-2">
+          <label className="flex items-center gap-2 bg-white border rounded-full px-3 py-2 text-sm">
             <input type="checkbox" checked={!!me.provider_mode} onChange={toggleProvider} />
             Provider Mode
           </label>
-          <button onClick={onLogout} className="bg-gray-200 rounded px-3 py-2">Logout</button>
+          <button onClick={onLogout} className="bg-slate-900 text-white rounded-full px-3 py-2 text-sm">Logout</button>
         </div>
       </header>
 
       <nav className="flex gap-2">
-        <button onClick={()=>setTab('browse')} className={`px-4 py-2 rounded ${tab==='browse'?'bg-blue-600 text-white':'bg-white border'}`}>Browse</button>
-        {me.provider_mode && <button onClick={()=>setTab('create')} className={`px-4 py-2 rounded ${tab==='create'?'bg-blue-600 text-white':'bg-white border'}`}>Create Service</button>}
-        <button onClick={()=>setTab('bookings')} className={`px-4 py-2 rounded ${tab==='bookings'?'bg-blue-600 text-white':'bg-white border'}`}>Bookings</button>
+        <button onClick={()=>setTab('browse')} className={`px-4 py-2 rounded-full text-sm font-medium transition ${tab==='browse'?'bg-indigo-600 text-white shadow':'bg-white border hover:bg-slate-50'}`}>Browse</button>
+        {me.provider_mode && <button onClick={()=>setTab('create')} className={`px-4 py-2 rounded-full text-sm font-medium transition ${tab==='create'?'bg-indigo-600 text-white shadow':'bg-white border hover:bg-slate-50'}`}>Create Service</button>}
+        <button onClick={()=>setTab('bookings')} className={`px-4 py-2 rounded-full text-sm font-medium transition ${tab==='bookings'?'bg-indigo-600 text-white shadow':'bg-white border hover:bg-slate-50'}`}>Bookings</button>
       </nav>
 
       {tab==='browse' && (
         <div className="space-y-4">
-          <div className="bg-white p-4 rounded-xl shadow flex flex-wrap gap-3">
-            <input className="border rounded px-3 py-2" placeholder="Search" value={filters.q} onChange={e=>setFilters({...filters,q:e.target.value})} />
-            <input className="border rounded px-3 py-2" placeholder="Country" value={filters.country} onChange={e=>setFilters({...filters,country:e.target.value})} />
-            <input className="border rounded px-3 py-2" placeholder="Province/State" value={filters.province} onChange={e=>setFilters({...filters,province:e.target.value})} />
-            <input className="border rounded px-3 py-2" placeholder="Category" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})} />
+          <div className="bg-white/80 backdrop-blur p-4 rounded-xl shadow ring-1 ring-slate-200 flex flex-wrap gap-3">
+            <input className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" placeholder="Search" value={filters.q} onChange={e=>setFilters({...filters,q:e.target.value})} />
+            <select className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" value={filters.country} onChange={e=>setFilters({...filters,country:e.target.value})}>
+              <option value="">Country</option>
+              <option value="Philippines">Philippines</option>
+            </select>
+            <select className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" value={filters.province} onChange={e=>setFilters({...filters,province:e.target.value})}>
+              <option value="">Province/State</option>
+              {provinceOptions.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+            <input className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" placeholder="Category" value={filters.category} onChange={e=>setFilters({...filters,category:e.target.value})} />
           </div>
           <BrowseSection token={token} filters={filters} onSelect={setSelectedService} />
           {selectedService && <BookingModal service={selectedService} onClose={()=>setSelectedService(null)} onBook={sendBooking} />}
@@ -117,13 +126,13 @@ function BrowseSection({ token, filters, onSelect }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {services.map(s => (
-        <div key={s.id} className="bg-white rounded-xl shadow p-4 flex flex-col">
-          {s.photos?.[0] && <img src={s.photos[0]} alt="" className="h-40 w-full object-cover rounded mb-3" />}
+        <div key={s.id} className="bg-white rounded-2xl shadow p-4 flex flex-col ring-1 ring-slate-200">
+          {s.photos?.[0] && <img src={s.photos[0]} alt="" className="h-40 w-full object-cover rounded-xl mb-3" />}
           <h3 className="font-bold text-lg">{s.name}</h3>
-          <p className="text-sm text-gray-600 line-clamp-3">{s.description}</p>
-          <div className="mt-2 text-sm text-gray-700">{s.category} • {s.country || 'N/A'} {s.province? `• ${s.province}`:''}</div>
+          <p className="text-sm text-slate-600 line-clamp-3">{s.description}</p>
+          <div className="mt-2 text-sm text-slate-700">{s.category} • {s.country || 'N/A'} {s.province? `• ${s.province}`:''}</div>
           <div className="mt-2 font-semibold">${s.price?.toFixed?.(2) ?? s.price}</div>
-          <button onClick={()=>onSelect(s)} className="mt-auto bg-blue-600 hover:bg-blue-700 text-white rounded px-3 py-2">Book</button>
+          <button onClick={()=>onSelect(s)} className="mt-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-2">Book</button>
         </div>
       ))}
     </div>
@@ -142,11 +151,11 @@ function BookingModal({ service, onClose, onBook }) {
     }
   }
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl p-4 max-w-lg w-full">
+    <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-4 max-w-lg w-full ring-1 ring-slate-200">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold text-lg">Book {service.name}</h3>
-          <button onClick={onClose} className="px-3 py-1 bg-gray-100 rounded">Close</button>
+          <button onClick={onClose} className="px-3 py-1 bg-slate-100 rounded-lg">Close</button>
         </div>
         <ServiceDetails service={service} />
         <hr className="my-3" />
@@ -159,9 +168,9 @@ function BookingModal({ service, onClose, onBook }) {
 function ServiceDetails({ service }) {
   return (
     <div className="space-y-2">
-      <div className="flex gap-2 overflow-x-auto">{service.photos?.map((p,i)=>(<img key={i} src={p} className="h-20 w-28 object-cover rounded" />))}</div>
-      <p className="text-sm text-gray-700">{service.description}</p>
-      <div className="text-sm text-gray-600">{service.category} • {service.country} {service.province? `• ${service.province}`:''}</div>
+      <div className="flex gap-2 overflow-x-auto">{service.photos?.map((p,i)=>(<img key={i} src={p} className="h-20 w-28 object-cover rounded-xl" />))}</div>
+      <p className="text-sm text-slate-700">{service.description}</p>
+      <div className="text-sm text-slate-600">{service.category} • {service.country} {service.province? `• ${service.province}`:''}</div>
     </div>
   )
 }
@@ -183,44 +192,44 @@ function ServiceBookingForm({ service, onSubmit, submitting }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <input type="date" className="border rounded px-3 py-2" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} />
-        <input type="time" className="border rounded px-3 py-2" value={form.time} onChange={e=>setForm({...form,time:e.target.value})} />
+        <input type="date" className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} />
+        <input type="time" className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" value={form.time} onChange={e=>setForm({...form,time:e.target.value})} />
       </div>
       {service.questions?.map(q => (
         <div key={q.id} className="flex flex-col gap-1">
           <label className="text-sm">{q.text}{q.required? ' *':''}</label>
-          <input className="border rounded px-3 py-2" value={form.answers[q.id]||''} onChange={e=>setForm({...form,answers:{...form.answers,[q.id]: e.target.value}})} />
+          <input className="border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" value={form.answers[q.id]||''} onChange={e=>setForm({...form,answers:{...form.answers,[q.id]: e.target.value}})} />
         </div>
       ))}
-      <textarea className="w-full border rounded px-3 py-2" rows="3" placeholder="Message to provider (optional)" value={form.message} onChange={e=>setForm({...form,message:e.target.value})} />
-      <button disabled={submitting} className="w-full bg-green-600 hover:bg-green-700 text-white rounded px-4 py-2">{submitting? 'Submitting...' : 'Send Request'}</button>
+      <textarea className="w-full border border-slate-200 focus:border-indigo-400 rounded-lg px-3 py-2" rows="3" placeholder="Message to provider (optional)" value={form.message} onChange={e=>setForm({...form,message:e.target.value})} />
+      <button disabled={submitting} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2">{submitting? 'Submitting...' : 'Send Request'}</button>
     </form>
   )
 }
 
 function BookingList({ title, items, role, onRespond }) {
   return (
-    <div className="bg-white rounded-xl shadow p-4">
+    <div className="bg-white/80 backdrop-blur rounded-2xl shadow ring-1 ring-slate-200 p-4">
       <h3 className="font-semibold mb-3">{title}</h3>
       <div className="space-y-3">
         {items.map(b => (
-          <div key={b.id} className="border rounded p-3">
+          <div key={b.id} className="border border-slate-200 rounded-xl p-3">
             <div className="flex justify-between">
               <div>
                 <div className="font-semibold">Service: {b.service_id}</div>
-                <div className="text-sm text-gray-600">Status: {b.status}</div>
+                <div className="text-sm text-slate-600">Status: {b.status}</div>
                 {b.scheduled_start && <div className="text-sm">Start: {new Date(b.scheduled_start).toLocaleString()}</div>}
               </div>
               {role==='provider' && (
                 <div className="flex gap-2">
-                  <button className="bg-green-600 text-white rounded px-3 py-1" onClick={()=>onRespond(b.id,'accepted')}>Accept</button>
-                  <button className="bg-red-600 text-white rounded px-3 py-1" onClick={()=>onRespond(b.id,'declined')}>Decline</button>
+                  <button className="bg-emerald-600 text-white rounded-lg px-3 py-1" onClick={()=>onRespond(b.id,'accepted')}>Accept</button>
+                  <button className="bg-rose-600 text-white rounded-lg px-3 py-1" onClick={()=>onRespond(b.id,'declined')}>Decline</button>
                 </div>
               )}
             </div>
           </div>
         ))}
-        {!items.length && <p className="text-sm text-gray-500">No items.</p>}
+        {!items.length && <p className="text-sm text-slate-500">No items.</p>}
       </div>
     </div>
   )
